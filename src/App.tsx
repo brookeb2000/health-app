@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import './App.css'
 
 const NAV_LINKS = ['About', 'Skills', 'Projects', 'Blog', 'Contact']
@@ -204,6 +205,113 @@ function Footer() {
   )
 }
 
+type Message = { role: 'user' | 'assistant'; text: string }
+
+function Chat() {
+  const [open, setOpen] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', text: 'Hi! Ask me anything about Brooke — her skills, projects, or interests.' },
+  ])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
+
+  async function sendMessage() {
+    const text = input.trim()
+    if (!text || loading) return
+
+    setInput('')
+    setMessages(prev => [...prev, { role: 'user', text }])
+    setLoading(true)
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      })
+      const data = await res.json()
+      setMessages(prev => [...prev, { role: 'assistant', text: data.reply }])
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', text: 'Sorry, something went wrong. Please try again.' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
+  return (
+    <>
+      {open && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <div className="chat-header-info">
+              <div className="chat-avatar">BB</div>
+              <div>
+                <div className="chat-name">Ask about Brooke</div>
+                <div className="chat-status">
+                  <span className="chat-dot" />
+                  Powered by Gemini
+                </div>
+              </div>
+            </div>
+            <button className="chat-close" onClick={() => setOpen(false)} aria-label="Close chat">✕</button>
+          </div>
+
+          <div className="chat-messages">
+            {messages.map((msg, i) => (
+              <div key={i} className={`chat-bubble ${msg.role}`}>
+                {msg.text}
+              </div>
+            ))}
+            {loading && (
+              <div className="chat-bubble assistant">
+                <span className="chat-typing">
+                  <span /><span /><span />
+                </span>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          <div className="chat-input-row">
+            <input
+              className="chat-input"
+              placeholder="Ask me anything..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={loading}
+            />
+            <button
+              className="chat-send"
+              onClick={sendMessage}
+              disabled={loading || !input.trim()}
+              aria-label="Send"
+            >
+              ↑
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button className="chat-fab" onClick={() => setOpen(o => !o)} aria-label="Open chat">
+        {open ? '✕' : '💬'}
+      </button>
+    </>
+  )
+}
+
 function App() {
   return (
     <>
@@ -217,6 +325,7 @@ function App() {
         <Contact />
       </main>
       <Footer />
+      <Chat />
     </>
   )
 }
