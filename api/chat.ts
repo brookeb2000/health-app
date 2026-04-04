@@ -54,8 +54,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     systemInstruction: SYSTEM_PROMPT,
   })
 
-  const result = await model.generateContent(message)
-  const text = result.response.text()
-
-  return res.status(200).json({ reply: text })
+  try {
+    const result = await model.generateContent(message)
+    const text = result.response.text()
+    return res.status(200).json({ reply: text })
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status
+    if (status === 429) {
+      return res.status(429).json({ error: 'Rate limit reached. Please try again in a moment.' })
+    }
+    return res.status(500).json({ error: 'Failed to generate a response.' })
+  }
 }
