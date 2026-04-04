@@ -29,7 +29,7 @@ Open to: Collaborations, internships, and interesting problems.`
  ├── POST /api/chat     ← receives { message } from your frontend
  ├── validates input    ← rejects bad requests
  ├── reads API key      ← from environment variable, never hardcoded
- ├── calls Gemini       ← gemini-1.5-flash model (fast + free tier)
+ ├── calls Gemini       ← gemini-2.0-flash model (fast + free tier)
  └── returns { reply }  ← sends answer back to frontend
  */
 
@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     systemInstruction: SYSTEM_PROMPT,
   })
 
