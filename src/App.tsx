@@ -229,13 +229,17 @@ function Chat() {
     setLoading(true)
 
     try {
-      c{
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', text: data.reply }])
+      if (!res.ok) {
+        setMessages(prev => [...prev, { role: 'assistant', text: data.error ?? 'Something went wrong. Please try again.' }])
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', text: data.reply }])
+      }
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', text: 'Sorry, something went wrong. Please try again.' }])
     } finally {
